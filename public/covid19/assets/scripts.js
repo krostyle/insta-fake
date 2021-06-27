@@ -266,16 +266,25 @@ const createTable = (data) => {
 
 }
 
-//Función para crear moda, recibe toda la data y el nombre del pais para luego crear un grafico con los datos de dicho pais
-const createModal = (data, nombrePais) => {
-    const pais = data.find(p => p.location === nombrePais)
-    const modalChart = document.getElementById('modal-chart')
-    modalChart.innerHTML = ""
-    const modal = /*HTML */
-        ` <div class="modal-dialog">
+//Función para crear moda, recibe token y el nombre del pais para luego crear un grafico con los datos de dicho pais
+const createModal = async(jwt, nombrePais) => {
+
+    try {
+        const urlPost = `http://localhost:3000/api/countries/${nombrePais}`
+        const response = await fetch(urlPost, {
+            method: 'GET',
+            headers: {
+                Authorization: `Bearer ${jwt}`
+            }
+        })
+        const { data } = await response.json();
+        const modalChart = document.getElementById('modal-chart')
+        modalChart.innerHTML = ""
+        const modal = /*HTML */
+            ` <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="exampleModalLabel">${nombrePais}</h5>
+                <h5 class="modal-title" id="exampleModalLabel">${data.location}</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
@@ -286,8 +295,13 @@ const createModal = (data, nombrePais) => {
             </div>
         </div>
     </div>`
-    modalChart.innerHTML = modal
-    createModalChart(pais)
+        modalChart.innerHTML = modal
+        createModalChart(data)
+    } catch (error) {
+        console.error(error)
+    }
+    //const pais = data.find(p => p.location === nombrePais)
+
 }
 
 
