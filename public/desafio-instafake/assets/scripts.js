@@ -113,6 +113,10 @@ const createBtnCerrarSesion = () => {
 
 }
 
+const createLogin = () => {
+
+}
+
 
 const createBtnShowMore = () => {
     const mostrarMas = document.getElementById('mostrarMas')

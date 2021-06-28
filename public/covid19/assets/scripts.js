@@ -1,28 +1,62 @@
 const ls = localStorage;
 
-const formLogin = document.getElementById('form-login');
-const table = document.getElementById("table");
-formLogin.addEventListener('submit', async(e) => {
-    e.preventDefault()
-    const email = document.getElementById('email').value;
-    const password = document.getElementById('password').value
-    const JWT = await getToken(email, password);
-    await getData(JWT);
+
+const iniciarSesion = document.getElementById('iniciar-sesion');
+const modalIniciarSesion = document.getElementById('modal-iniciar-sesion')
+
+iniciarSesion.addEventListener('click', (e) => {
+    e.preventDefault();
+    modalIniciarSesion.innerHTML = /*HTML */
+        `<div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header ">
+                <h5 class="modal-title text-center" id="exampleModalLabel">Casos Covid 19</h5>
+                <i class="fa fa-virus fa-3x px-2"></i>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+        <div class="modal-body">
+        <div class="row justify-content-center align-items-center p-5 m-5">
+        <div class="col-12 d-block">
+            <form id="form-login">
+                <div class="form-group py-2">
+                    <label>Email address</label>
+                    <input type="email" class="form-control" aria-describedby="emailHelp" id="email">
+                </div>
+                <div class="form-group py-2">
+                    <label>Password</label>
+                    <input type="password" class="form-control" id="password">
+                </div>
+                <div class="py-5 text-center">
+                    <button type="submit" class="btn btn-primary" id="btn-login" data-bs-dismiss="modal">Iniciar Sesión</button>
+                </div>
+            </form>
+        </div>
+    </div>
+        </div>
+    </div>
+</div>`
+
+    const btnIniciarSesion = document.getElementById('btn-login')
+    btnIniciarSesion.addEventListener('click', async(e) => {
+        e.preventDefault();
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value
+        const JWT = await getToken(email, password);
+        updateNavbar(JWT, 'Situación Chile', 'situacion-chile')
+    })
 
 })
 
 
-
-
-//Función para mostrar o ocultar secciones , recibe como parámetro el id del elemento a ocultar
-const showHideSection = (section) => {
-    const hide = document.getElementById(section)
-    if (hide.style.display === 'none') {
-        hide.style.display = 'block'
-    } else {
-        hide.style.display = 'none'
-    }
-}
+// //Función para mostrar o ocultar secciones , recibe como parámetro el id del elemento a ocultar
+// const showHideSection = (section) => {
+//     const hide = document.getElementById(section)
+//     if (hide.style.display === 'none') {
+//         hide.style.display = 'block'
+//     } else {
+//         hide.style.display = 'none'
+//     }
+// }
 
 
 const deleteSection = (section) => {
@@ -41,6 +75,7 @@ const getToken = async(email, password) => {
         const { token } = await response.json();
         ls.clear();
         ls.setItem('jwt-token-covid', token)
+        return token
     } catch (error) {
         console.error(error);
         console.log('Usuario o Contraseña Incorrecta');
@@ -48,31 +83,33 @@ const getToken = async(email, password) => {
 }
 
 //Función para obtener la Data
-const getData = async(jwt) => {
+const getData = async() => {
     try {
         const urlPost = `http://localhost:3000/api/total`
         const response = await fetch(urlPost, {
             method: 'GET',
             headers: {
-                Authorization: `Bearer ${jwt}`
+                Authorization: `Bearer`
             }
         })
         const { data } = await response.json();
-        showHideSection('login');
-        createNav();
         const filters = filter(data)
+        createMainChart(filters)
         createTable(data)
         table.addEventListener('click', (e) => {
+
             if (e.target.tagName === "BUTTON") {
+
                 const id = e.srcElement.attributes['id'].value
-                createModal(data, id)
+                createModal(id)
             }
         })
-        createMainChart(filters)
+
     } catch (error) {
         console.error(error);
     }
 }
+getData();
 
 //Función para filtrar aquellos paises con más de 10000 casos activos.
 const filter = (data) => {
@@ -80,41 +117,6 @@ const filter = (data) => {
     return filtrados;
 }
 
-
-//Función para crear navbar
-const createNav = () => {
-    const nav = document.getElementById('navbar')
-    nav.setAttribute('class', 'navbar navbar-dark bg-dark navbar-expand-lg')
-    nav.innerHTML =
-        /*HTML */
-        `<div class="container-fluid">
-    <a class="navbar-brand" href="#">Covid 19</a>
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-      <span class="navbar-toggler-icon"></span>
-    </button>
-    <div class="collapse navbar-collapse d-flex" id="navbarSupportedContent">
-      <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
-        <li class="nav-item">
-          <a class="nav-link active" aria-current="page" href="#">Home</a>
-        </li>
-        <li class="nav-item">
-        <a class="nav-link active" id="cerrar-sesion" aria-current="page" href="#">Cerrar Sesión</a>
-      </li>
-      </ul>
-    </div>
-  </div>`
-
-    //Cerrar sesión
-    const cerrarSesion = document.getElementById('cerrar-sesion')
-    cerrarSesion.addEventListener('click', (e) => {
-        ls.clear();
-        showHideSection('login')
-        deleteSection('chart')
-        deleteSection('navbar')
-        deleteSection('table')
-    })
-
-}
 
 
 //Función para crear el gráfico
@@ -189,6 +191,10 @@ const createMainChart = (countries) => {
                 y: {
                     beginAtZero: true
                 }
+            },
+            title: {
+                display: true,
+                text: 'Casos por País'
             }
         }
     })
@@ -266,15 +272,15 @@ const createTable = (data) => {
 
 }
 
-//Función para crear moda, recibe token y el nombre del pais para luego crear un grafico con los datos de dicho pais
-const createModal = async(jwt, nombrePais) => {
+//Función para crear modal, recibe token y el nombre del pais para luego crear un grafico con los datos de dicho pais
+const createModal = async(nombrePais) => {
 
     try {
         const urlPost = `http://localhost:3000/api/countries/${nombrePais}`
         const response = await fetch(urlPost, {
             method: 'GET',
             headers: {
-                Authorization: `Bearer ${jwt}`
+                Authorization: `Bearer`
             }
         })
         const { data } = await response.json();
@@ -300,15 +306,195 @@ const createModal = async(jwt, nombrePais) => {
     } catch (error) {
         console.error(error)
     }
-    //const pais = data.find(p => p.location === nombrePais)
-
 }
 
 
-const login = (async() => {
+const updateNavbar = (JWT, text, id) => {
+    const navbar = document.getElementById('navbar')
+    navbar.innerHTML = /*HTML */
+        `<div class="container-fluid">
+        <a class="navbar-brand" href="#">Covid 19</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+                <li class="nav-item">
+                    <a class="nav-link active" aria-current="page" href="#">Home</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link active" id="${id}" aria-current="page" href="#">${text}</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link active" id="cerrar-sesion" aria-current="page" href="#">Cerrar Sesión</a>
+                </li>
+            </ul>
+        </div>
+    </div>`;
 
-    const jwt = localStorage.getItem('jwt-token-covid');
-    if (jwt) {
-        getData(jwt);
+    const cerrarSesion = document.getElementById('cerrar-sesion');
+    cerrarSesion.addEventListener('click', (e) => {
+        ls.clear();
+        createNavbar();
+        getData();
+
+    })
+
+    const situacion = document.getElementById(`${id}`);
+    situacion.addEventListener('click', async(e) => {
+        if (id === 'situacion-chile') {
+            await getDataChile(JWT);
+            updateNavbar(JWT, 'Situación Por País', 'situacion-pais')
+        } else {
+            getData();
+            updateNavbar(JWT, 'Situación Chile', 'situacion-chile')
+        }
+
+
+    })
+}
+
+
+const createNavbar = () => {
+    const navbar = document.getElementById('navbar')
+    navbar.innerHTML = /*HTML */
+        `<div class="container-fluid">
+        <a class="navbar-brand" href="#">Covid 19</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+                <li class="nav-item">
+                    <a class="nav-link active" aria-current="page" href="#">Home</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link active" id="iniciar-sesion" aria-current="page" href="#" data-bs-toggle="modal" data-bs-target="#modal-iniciar-sesion">Iniciar Sesión</a>
+                </li>
+            </ul>
+        </div>
+    </div>`;
+}
+
+
+
+const getDataChile = async(jwt) => {
+    try {
+        const urlPost1 = `http://localhost:3000/api/confirmed`
+        const urlPost2 = `http://localhost:3000/api/deaths`
+        const urlPost3 = `http://localhost:3000/api/recovered`
+        const response1 = await fetch(urlPost1, {
+            method: 'GET',
+            headers: {
+                Authorization: `Bearer ${jwt}`
+            }
+        })
+        const response2 = await fetch(urlPost2, {
+            method: 'GET',
+            headers: {
+                Authorization: `Bearer ${jwt}`
+            }
+        })
+        const response3 = await fetch(urlPost3, {
+            method: 'GET',
+            headers: {
+                Authorization: `Bearer ${jwt}`
+            }
+        })
+        const data1 = await response1.json();
+        const data2 = await response2.json();
+        const data3 = await response3.json();
+
+        const confirmados = data1.data
+        const muertes = data2.data
+        const recuperados = data3.data
+        createChartChile(confirmados, muertes, recuperados)
+        deleteSection('table')
+            //createMainChart(filters)
+    } catch (error) {
+        console.error(error);
     }
-})();
+}
+
+
+const createChartChile = (confirmed, deaths, recovered) => {
+    const fechas = []
+    const confirmados = []
+    const muertes = []
+    const recuperados = []
+    confirmed.forEach(e => {
+        fechas.push(e.date)
+        confirmados.push(e.total)
+    })
+    deaths.forEach(e => {
+        muertes.push(e.total)
+    })
+    recovered.forEach(e => {
+        recuperados.push(e.total)
+    })
+
+    const divCanvas = document.getElementById('chart');
+    divCanvas.innerHTML = `<canvas id="myChart" width="400" height="400"></canvas>`;
+    const ctx = document.getElementById('myChart').getContext('2d');
+    const chart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: fechas,
+            datasets: [{
+                    label: "Confirmados",
+                    data: confirmados,
+                    backgroundColor: [
+                        'rgba(75, 192, 192, 0.2)',
+                    ],
+                    borderColor: [
+                        'rgba(75, 192, 192, 1)',
+                    ],
+                    borderWidth: 1
+                },
+                {
+                    label: "Recuperados",
+                    data: recuperados,
+                    backgroundColor: [
+                        'rgba(153, 102, 255, 0.2)',
+                    ],
+                    borderColor: [
+                        'rgba(153, 102, 255, 1)',
+                    ],
+                    borderWidth: 1
+                },
+                {
+                    label: "Muertes",
+                    data: muertes,
+                    backgroundColor: [
+                        'rgba(255, 99, 132, 0.2)',
+                    ],
+                    borderColor: [
+                        'rgba(255, 99, 132, 1)',
+                    ],
+                    borderWidth: 1
+                },
+            ],
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'top',
+                },
+                title: {
+                    display: true,
+                    text: 'Casos Chile'
+                }
+            }
+        },
+    })
+}
+
+
+
+// const login = (async() => {
+//     const jwt = localStorage.getItem('jwt-token-covid');
+//     if (jwt) {
+//         getData(jwt);
+//     }
+// })();
