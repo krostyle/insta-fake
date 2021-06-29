@@ -83,6 +83,24 @@ const getToken = async(email, password) => {
 }
 
 //Función para obtener la Data
+
+const getDataApiError = async() => {
+    try {
+        const urlPost = `http://localhost:3000/api/total`
+        const response = await fetch(urlPost, {
+            method: 'GET',
+            headers: {
+                Authorization: `Bearer`
+            }
+        })
+        const { data } = await response.json();
+        return data
+    } catch (error) {
+        console.error(error);
+    }
+}
+
+
 const getData = async() => {
     try {
         const urlPost = `http://localhost:3000/api/total`
@@ -97,14 +115,11 @@ const getData = async() => {
         createMainChart(filters)
         createTable(data)
         table.addEventListener('click', (e) => {
-
             if (e.target.tagName === "BUTTON") {
-
                 const id = e.srcElement.attributes['id'].value
                 createModal(id)
             }
         })
-
     } catch (error) {
         console.error(error);
     }
@@ -272,9 +287,8 @@ const createTable = (data) => {
 
 }
 
-//Función para crear modal, recibe token y el nombre del pais para luego crear un grafico con los datos de dicho pais
+//Función para crear modal, recibe el nombre del pais para luego crear un grafico con los datos de dicho pais
 const createModal = async(nombrePais) => {
-
     try {
         const urlPost = `http://localhost:3000/api/countries/${nombrePais}`
         const response = await fetch(urlPost, {
@@ -283,7 +297,13 @@ const createModal = async(nombrePais) => {
                 Authorization: `Bearer`
             }
         })
-        const { data } = await response.json();
+        let { data } = await response.json();
+        const flag = JSON.stringify(data) === JSON.stringify({})
+        if (flag) {
+            const paises = await getDataApiError();
+            data = paises.find(p => p.location === nombrePais)
+            console.log(data);
+        }
         const modalChart = document.getElementById('modal-chart')
         modalChart.innerHTML = ""
         const modal = /*HTML */
