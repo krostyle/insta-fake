@@ -43,7 +43,11 @@ iniciarSesion.addEventListener('click', (e) => {
         const email = document.getElementById('email').value;
         const password = document.getElementById('password').value
         const JWT = await getToken(email, password);
-        updateNavbar(JWT, 'Situación Chile', 'situacion-chile')
+        if (JWT) {
+            updateNavbar(JWT, 'Situación Chile', 'situacion-chile')
+        } else {
+            console.log('Error al Iniciar Sesión');
+        }
     })
 
 })
@@ -73,10 +77,15 @@ const getToken = async(email, password) => {
             method: 'POST',
             body: JSON.stringify({ email, password })
         })
+
         const { token } = await response.json();
-        ls.clear();
-        ls.setItem('jwt-token-covid', token)
-        return token
+        if (token) {
+            ls.clear();
+            ls.setItem('jwt-token-covid', token)
+            return token
+        } else {
+            return false
+        }
     } catch (error) {
         console.error(error);
         console.log('Usuario o Contraseña Incorrecta');
