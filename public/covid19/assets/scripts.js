@@ -3,6 +3,7 @@ const ls = localStorage;
 
 const iniciarSesion = document.getElementById('iniciar-sesion');
 const modalIniciarSesion = document.getElementById('modal-iniciar-sesion')
+let cont = 1
 
 iniciarSesion.addEventListener('click', (e) => {
     e.preventDefault();
@@ -114,12 +115,21 @@ const getData = async() => {
         const filters = filter(data)
         createMainChart(filters)
         createTable(data)
-        table.addEventListener('click', (e) => {
-            if (e.target.tagName === "BUTTON") {
-                const id = e.srcElement.attributes['id'].value
-                createModal(id)
-            }
-        })
+
+        const tableMain = document.getElementById("table")
+        console.log(cont);
+        //Para agregar Listener solo una vez
+        if (cont === 1) {
+            tableMain.addEventListener('click', (e) => {
+                if (e.target.tagName === "BUTTON") {
+                    console.log('Veces ejecutadas');
+                    const id = e.srcElement.attributes['id'].value
+                    createModal(id)
+                    return;
+                }
+            })
+        }
+        cont++
     } catch (error) {
         console.error(error);
     }
