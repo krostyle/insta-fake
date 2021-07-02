@@ -1,68 +1,96 @@
+//Declaración de variables Iniciales
 const ls = localStorage;
-
-
 const iniciarSesion = document.getElementById('iniciar-sesion');
 const modalIniciarSesion = document.getElementById('modal-iniciar-sesion')
-let cont = 1
+let cont = 1;
+
+
 
 iniciarSesion.addEventListener('click', (e) => {
     e.preventDefault();
     modalIniciarSesion.innerHTML = /*HTML */
-        `<div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header ">
-                <h5 class="modal-title text-center" id="exampleModalLabel">Casos Covid 19</h5>
-                <i class="fa fa-virus fa-3x px-2"></i>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        `
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header ">
+                    <h5 class="modal-title text-center" id="exampleModalLabel">Casos Covid 19</h5>
+                    <i class="fa fa-virus fa-3x px-2"></i>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row justify-content-center align-items-center p-5 m-5">
+                        <div class="col-12 d-block">
+                            <form id="form-login" class="needs-validation" novalidate>
+                                <div class="form-group py-2">
+                                    <label>Email address</label>
+                                    <input type="email" class="form-control" aria-describedby="emailHelp" id="email" required>
+                                </div>
+                                <div class="form-group py-2">
+                                    <label>Password</label>
+                                    <input type="password" class="form-control" id="password" required>
+                                </div>
+                                <div class="py-5 text-center">
+                                    <button type="submit" class="btn btn-primary" id="btn-login" data-bs-dismiss="">Iniciar Sesión</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
             </div>
-        <div class="modal-body">
-        <div class="row justify-content-center align-items-center p-5 m-5">
-        <div class="col-12 d-block">
-            <form id="form-login">
-                <div class="form-group py-2">
-                    <label>Email address</label>
-                    <input type="email" class="form-control" aria-describedby="emailHelp" id="email">
-                </div>
-                <div class="form-group py-2">
-                    <label>Password</label>
-                    <input type="password" class="form-control" id="password">
-                </div>
-                <div class="py-5 text-center">
-                    <button type="submit" class="btn btn-primary" id="btn-login" data-bs-dismiss="modal">Iniciar Sesión</button>
-                </div>
-            </form>
-        </div>
-    </div>
-        </div>
-    </div>
-</div>`
+        </div>`
 
-    const btnIniciarSesion = document.getElementById('btn-login')
-    btnIniciarSesion.addEventListener('click', async(e) => {
+    //Función que valida el formulario, extraída directamente desde BS5
+    const validate = function() {
+        'use strict'
+
+        // Fetch all the forms we want to apply custom Bootstrap validation styles to
+        var forms = document.querySelectorAll('.needs-validation')
+
+        // Loop over them and prevent submission
+        Array.prototype.slice.call(forms)
+            .forEach(function(form) {
+                form.addEventListener('submit', function(event) {
+                    if (!form.checkValidity()) {
+                        event.preventDefault()
+                        event.stopPropagation()
+                    }
+
+                    form.classList.add('was-validated')
+                }, false)
+            })
+    }
+    validate();
+
+    // const btnIniciarSesion = document.getElementById('btn-login')
+    const formLogin = document.getElementById('form-login')
+    formLogin.addEventListener('submit', async(e) => {
         e.preventDefault();
-        const email = document.getElementById('email').value;
-        const password = document.getElementById('password').value
-        const JWT = await getToken(email, password);
+        const email = document.getElementById('email');
+        const password = document.getElementById('password')
+        const JWT = await getToken(email.value, password.value);
         if (JWT) {
+            $(modalIniciarSesion).modal('hide')
+            Swal.fire({
+                icon: 'success',
+                title: 'Iniciaste Sesión Correctamente',
+                showConfirmButton: false,
+                timer: 1500
+            })
             updateNavbar(JWT, 'Situación Chile', 'situacion-chile')
         } else {
-            console.log('Error al Iniciar Sesión');
+            $(modalIniciarSesion).modal('hide')
+            Swal.fire({
+                icon: 'error',
+                title: 'Oops...',
+                text: 'Usuario o Contraseña Incorrecta',
+            })
         }
     })
 
+
+
+
 })
-
-
-// //Función para mostrar o ocultar secciones , recibe como parámetro el id del elemento a ocultar
-// const showHideSection = (section) => {
-//     const hide = document.getElementById(section)
-//     if (hide.style.display === 'none') {
-//         hide.style.display = 'block'
-//     } else {
-//         hide.style.display = 'none'
-//     }
-// }
-
 
 const deleteSection = (section) => {
     const del = document.getElementById(section)
@@ -77,7 +105,6 @@ const getToken = async(email, password) => {
             method: 'POST',
             body: JSON.stringify({ email, password })
         })
-
         const { token } = await response.json();
         if (token) {
             ls.clear();
@@ -92,8 +119,7 @@ const getToken = async(email, password) => {
     }
 }
 
-//Función para obtener la Data
-
+//Función para obtener la Data, Se utiliza para aquellos casos donde hay problemas en la API
 const getDataApiError = async() => {
     try {
         const urlPost = `http://localhost:3000/api/total`
@@ -110,9 +136,15 @@ const getDataApiError = async() => {
     }
 }
 
-
+//Función para obtener la Data
 const getData = async() => {
     try {
+        Swal.fire({
+            title: 'Cargando...',
+            showLoaderOnConfirm: true,
+            allowOutsideClick: false
+        });
+        swal.showLoading();
         const urlPost = `http://localhost:3000/api/total`
         const response = await fetch(urlPost, {
             method: 'GET',
@@ -126,12 +158,10 @@ const getData = async() => {
         createTable(data)
 
         const tableMain = document.getElementById("table")
-        console.log(cont);
-        //Para agregar Listener solo una vez
+            //Para agregar Listener solo una vez
         if (cont === 1) {
             tableMain.addEventListener('click', (e) => {
                 if (e.target.tagName === "BUTTON") {
-                    console.log('Veces ejecutadas');
                     const id = e.srcElement.attributes['id'].value
                     createModal(id)
                     return;
@@ -139,6 +169,7 @@ const getData = async() => {
             })
         }
         cont++
+        swal.close();
     } catch (error) {
         console.error(error);
     }
@@ -309,6 +340,12 @@ const createTable = (data) => {
 //Función para crear modal, recibe el nombre del pais para luego crear un grafico con los datos de dicho pais
 const createModal = async(nombrePais) => {
     try {
+        Swal.fire({
+            title: 'Cargando...',
+            showLoaderOnConfirm: true,
+            allowOutsideClick: false
+        });
+        swal.showLoading();
         const urlPost = `http://localhost:3000/api/countries/${nombrePais}`
         const response = await fetch(urlPost, {
             method: 'GET',
@@ -321,7 +358,6 @@ const createModal = async(nombrePais) => {
         if (flag) {
             const paises = await getDataApiError();
             data = paises.find(p => p.location === nombrePais)
-            console.log(data);
         }
         const modalChart = document.getElementById('modal-chart')
         modalChart.innerHTML = ""
@@ -342,6 +378,7 @@ const createModal = async(nombrePais) => {
     </div>`
         modalChart.innerHTML = modal
         createModalChart(data)
+        swal.close();
     } catch (error) {
         console.error(error)
     }
@@ -373,6 +410,12 @@ const updateNavbar = (JWT, text, id) => {
 
     const cerrarSesion = document.getElementById('cerrar-sesion');
     cerrarSesion.addEventListener('click', (e) => {
+        Swal.fire({
+            icon: 'info',
+            title: 'Cerraste Sesión Correctamente',
+            showConfirmButton: false,
+            timer: 1500
+        })
         ls.clear();
         createNavbar();
         getData();
@@ -419,6 +462,13 @@ const createNavbar = () => {
 
 const getDataChile = async(jwt) => {
     try {
+        Swal.fire({
+            title: 'Cargando...',
+            showLoaderOnConfirm: true,
+            allowOutsideClick: false
+        });
+        swal.showLoading();
+
         const urlPost1 = `http://localhost:3000/api/confirmed`
         const urlPost2 = `http://localhost:3000/api/deaths`
         const urlPost3 = `http://localhost:3000/api/recovered`
@@ -440,6 +490,7 @@ const getDataChile = async(jwt) => {
                 Authorization: `Bearer ${jwt}`
             }
         })
+
         const data1 = await response1.json();
         const data2 = await response2.json();
         const data3 = await response3.json();
@@ -449,7 +500,7 @@ const getDataChile = async(jwt) => {
         const recuperados = data3.data
         createChartChile(confirmados, muertes, recuperados)
         deleteSection('table')
-            //createMainChart(filters)
+        swal.close();
     } catch (error) {
         console.error(error);
     }
@@ -528,12 +579,3 @@ const createChartChile = (confirmed, deaths, recovered) => {
         },
     })
 }
-
-
-
-// const login = (async() => {
-//     const jwt = localStorage.getItem('jwt-token-covid');
-//     if (jwt) {
-//         getData(jwt);
-//     }
-// })();
